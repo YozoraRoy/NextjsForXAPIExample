@@ -1,8 +1,66 @@
+'use client';
+import { useState, useEffect } from 'react';
 import Image from "next/image";
 
 export default function Home() {
+  const [authUrl, setAuthUrl] = useState('');
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // 檢查登入狀態
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/twitter/auth/verify');
+        const data = await response.json();
+        if (data.success) {
+          setUser(data.user);
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  const handleLogin = async () => {
+    try {
+      console.log('Starting Twitter login...');
+      const response = await fetch('/api/twitter/auth/request-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        window.location.href = data.authorizeUrl;
+      } else {
+        console.error('Failed to get request token:', data.error);
+      }
+    } catch (error) {
+      console.error('Error during login:', error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      // 清除 cookies
+      document.cookie = 'twitter_access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      document.cookie = 'twitter_access_token_secret=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      setUser(null);
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
         <Image
           className="dark:invert"
@@ -96,6 +154,35 @@ export default function Home() {
           Go to nextjs.org →
         </a>
       </footer>
+      <div className="fixed top-4 right-4">
+        {loading ? (
+          <div>載入中...</div>
+        ) : user ? (
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-2">
+              <img 
+                src={user.profile_image_url_https} 
+                alt={user.name} 
+                className="w-8 h-8 rounded-full"
+              />
+              <span>{user.name}</span>
+            </div>
+            <button 
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              登出
+            </button>
+          </div>
+        ) : (
+          <button 
+            onClick={handleLogin}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            使用 Twitter 登入
+          </button>
+        )}
+      </div>
     </div>
   );
 }
