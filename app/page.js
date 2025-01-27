@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Image from "next/image";
+import TweetForm from './components/TweetForm';
 
 export default function Home() {
-  const [authUrl, setAuthUrl] = useState('');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -11,7 +11,7 @@ export default function Home() {
     // 檢查登入狀態
     const checkAuth = async () => {
       try {
-        const response = await fetch('/api/twitter/auth/verify');
+        const response = await fetch('/api/twitter/auth2/verify');
         const data = await response.json();
         if (data.success) {
           setUser(data.user);
@@ -28,20 +28,15 @@ export default function Home() {
 
   const handleLogin = async () => {
     try {
-      console.log('Starting Twitter login...');
-      const response = await fetch('/api/twitter/auth/request-token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
+      console.log('Starting Twitter OAuth2 login...');
+      const response = await fetch('/api/twitter/auth2');
       const data = await response.json();
       
       if (data.success) {
-        window.location.href = data.authorizeUrl;
+        console.log('Redirecting to:', data.url);
+        window.location.href = data.url;
       } else {
-        console.error('Failed to get request token:', data.error);
+        console.error('Failed to get authorization URL:', data.error);
       }
     } catch (error) {
       console.error('Error during login:', error);
@@ -50,9 +45,16 @@ export default function Home() {
 
   const handleLogout = async () => {
     try {
-      // 清除 cookies
-      document.cookie = 'twitter_access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      document.cookie = 'twitter_access_token_secret=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      // 呼叫後端登出 API
+      const response = await fetch('/api/twitter/auth2/logout', {
+        method: 'POST'
+      });
+
+      if (!response.ok) {
+        throw new Error('Logout failed');
+      }
+
+      // 清除前端狀態
       setUser(null);
     } catch (error) {
       console.error('Logout failed:', error);
@@ -158,15 +160,18 @@ export default function Home() {
         {loading ? (
           <div>載入中...</div>
         ) : user ? (
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col items-end gap-4">
             <div className="flex items-center gap-2">
               <img 
-                src={user.profile_image_url_https} 
+                src={user.profile_image_url} 
                 alt={user.name} 
                 className="w-8 h-8 rounded-full"
               />
               <span>{user.name}</span>
             </div>
+            
+            <TweetForm />
+            
             <button 
               onClick={handleLogout}
               className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"

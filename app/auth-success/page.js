@@ -1,44 +1,21 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function AuthSuccess() {
-  const [user, setUser] = useState(null);
-  const [error, setError] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
-    // 驗證認證
-    const verifyAuth = async () => {
-      try {
-        const response = await fetch('/api/twitter/auth/verify');
-        const data = await response.json();
-        
-        if (data.success) {
-          setUser(data.user);
-        } else {
-          setError(data.error);
-        }
-      } catch (error) {
-        setError(error.message);
-      }
-    };
-
-    verifyAuth();
-  }, []);
-
-  if (error) {
-    return <div>認證失敗: {error}</div>;
-  }
-
-  if (!user) {
-    return <div>載入中...</div>;
-  }
+    // 短暫延遲後重定向到首頁
+    setTimeout(() => {
+      router.push('/');
+    }, 1000);
+  }, [router]);
 
   return (
-    <div>
-      <h1>認證成功！</h1>
-      <p>歡迎, {user.name}</p>
-      <p>Twitter ID: {user.id}</p>
-      <p>Screen Name: {user.screen_name}</p>
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      <h1 className="text-2xl font-bold mb-4">認證成功！</h1>
+      <p>正在重定向回首頁...</p>
     </div>
   );
 } 
