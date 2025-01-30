@@ -38,8 +38,8 @@ export default function TweetForm() {
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="寫點什麼..."
-        className="p-2 border rounded"
+        placeholder="有什麼新鮮事？"
+        className="w-[400px] h-[200px] p-4 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-black placeholder-black/70 dark:placeholder-white/70"
         maxLength={280}
       />
       <button
